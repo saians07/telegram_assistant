@@ -1,6 +1,6 @@
 [package]
-name = "stateful_telegram_assistant"
-version = "0.1.0"
+name = "bella_swan"
+version = "1.0.0"
 edition = "2024"
 
 [dependencies]
