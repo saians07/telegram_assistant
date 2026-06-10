@@ -4,6 +4,11 @@ version = "1.0.0"
 edition = "2024"
 
 [dependencies]
+# Backend
 axum = "0.8.9"
-teloxide = {version = "0.17.0", features = ["webhooks"]}
+
+# Asynchronuous
 tokio = {version = "1.52.3", features = ["rt-multi-thread", "macros"]}
+
+# Telegram
+teloxide = {version = "0.17.0", features = ["webhooks"]}
