@@ -1,7 +1,12 @@
 [package]
-name = "bella_swan"
+name = "swan"
 version = "1.0.0"
 edition = "2024"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
 
 [dependencies]
 # Backend
@@ -12,3 +17,13 @@ tokio = {version = "1.52.3", features = ["rt-multi-thread", "macros"]}
 
 # Telegram
 teloxide = {version = "0.17.0", features = ["webhooks"]}
+
+# to avoid cross compilation error
+openssl = { version = "0.10.80", features = ["vendored"] }
+utoipa = { version = "5.5.0", features = ["chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.150"
+anyhow = "1.0.102"
+reqwest = "0.13.4"
+dotenvy = "0.15.7"
