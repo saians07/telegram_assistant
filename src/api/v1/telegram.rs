@@ -1,3 +1,5 @@
+use std::env;
+
 use anyhow::Result;
 use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
 use secrecy::ExposeSecret;
@@ -41,12 +43,22 @@ pub async fn listen(
     // Currently, we will use this simple approach.
     // TODO: Use database later!
     if message.chat.id.0 != state.owner_chat_id {
-        let audio_file = InputFile::file("assets/voices/Belum_Terdaftar.mp3");
+        let Ok(path) = env::current_dir() else {
+            return Err(SwanError::operation("Failed to extract working directory"));
+        };
+        let audio_file = InputFile::file(format!(
+            "{}/assets/voices/Belum_Terdaftar.mp3",
+            path.display()
+        ));
         let _ = state
             .bot
             .send_voice(message.chat.id, audio_file)
             .caption("Pesan dari Tarzan!")
             .await?;
+        return Ok(Json(BaseResponse::reply(
+            StatusCode::OK,
+            "Your request has been accepted!",
+        )));
     }
     let _ = state
         .bot
