@@ -1,7 +1,9 @@
 use crate::api::{common, v1::telegram};
+use crate::core::middleware::request_checker::request_checker;
 use crate::dto::response::BaseResponse;
 use crate::state::AppState;
 
+use axum::middleware::from_fn_with_state;
 use axum::{
     Router,
     routing::{get, post},
@@ -33,10 +35,13 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 struct ApiDoc;
 
-pub fn create_routes() -> Router<AppState> {
+pub fn create_routes(state: AppState) -> Router<AppState> {
     let common_routes = Router::new().route("/common/health", get(common::health));
-    let telegram_routes = Router::new()
+    let telegram_webhook_listener = Router::new()
         .route("/telegram/listener", post(telegram::listen))
+        .layer(from_fn_with_state(state, request_checker));
+    let telegram_routes = Router::new()
+        .merge(telegram_webhook_listener)
         .route("/telegram/remove_webhook", get(telegram::remove_webhook))
         .route("/telegram/webhook_info", get(telegram::get_webhook_info))
         .route("/telegram/set_webhook", post(telegram::set_new_webhook));
