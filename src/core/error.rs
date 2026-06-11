@@ -16,6 +16,9 @@ pub enum SwanError {
     #[serde(skip)]
     TelegramRequestError(#[from] teloxide::RequestError),
 
+    #[error("Unknown bot!")]
+    UnauthorizedBot,
+
     #[error("Operation failed: {operation}")]
     #[serde(skip)]
     Operation {
@@ -64,6 +67,7 @@ impl IntoResponse for SwanError {
 
         let status = match self {
             SwanError::TelegramRequestError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            SwanError::UnauthorizedBot => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };
 
