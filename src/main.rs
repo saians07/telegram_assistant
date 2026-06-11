@@ -17,8 +17,9 @@ async fn main() {
         .unwrap_or_default()
         .parse::<i64>()
         .unwrap_or_default();
+    let secret_token = env::var("TELEGRAM_SECRET_CODE").unwrap_or("".to_string());
     let bot = teloxide::Bot::new(bot_token);
-    let app_state = state::AppState::new(bot, owner_chat_id);
+    let app_state = state::AppState::new(bot, owner_chat_id, secret_token.into());
     let backend_api_routes = create_routes();
 
     // defining the listener that will listen to our TCP

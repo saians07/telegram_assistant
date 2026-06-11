@@ -2,6 +2,7 @@ use std::env;
 
 use anyhow::Result;
 use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
+use secrecy::ExposeSecret;
 use teloxide::{
     payloads::{SendVoiceSetters, SetWebhookSetters},
     prelude::{Request, Requester},
@@ -109,12 +110,10 @@ pub async fn set_new_webhook(
     Extension(request_id): Extension<RequestId>,
     Json(payload): Json<NewWebhook>,
 ) -> Result<impl IntoResponse, SwanError> {
-    dotenvy::dotenv().ok();
-    let secret_token = env::var("TELEGRAM_SECRET_CODE").unwrap_or("".to_string());
     state
         .bot
         .set_webhook(payload.into_url()?)
-        .secret_token(secret_token.to_owned())
+        .secret_token(state.secret_token.expose_secret().to_owned())
         .await
         .map_err(|e| e)?;
     state
@@ -124,7 +123,7 @@ pub async fn set_new_webhook(
             format!(
                 "Webhook has been changed to: {}\nThe secret token: {}\nRequest ID: {}",
                 payload.webhook_url,
-                secret_token,
+                "[redacted for security]",
                 request_id.as_str()
             ),
         )
