@@ -8,8 +8,8 @@ on:
 jobs:
   deploy:
     name: Deploy to server
-    needs: build-and-test
     runs-on: ubuntu-latest
+    needs: quality-check
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout the github code
@@ -20,7 +20,16 @@ jobs:
         with:
           toolchain: stable
           override: true
+          target: aarch64-unknown-linux-gnu
+
+      - name: Install cross-compile linker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
       - name: Build release binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu cargo build --release
 
       - name: Install Cloudflared
