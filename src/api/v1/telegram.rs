@@ -112,8 +112,7 @@ pub async fn set_new_webhook(
         .bot
         .set_webhook(payload.into_url()?)
         .secret_token(state.secret_token.expose_secret().to_owned())
-        .await
-        .map_err(|e| e)?;
+        .await?;
     state
         .bot
         .send_message(
