@@ -146,8 +146,8 @@ pub async fn set_new_webhook(
 pub async fn remove_webhook(
     State(state): State<AppState>,
     Extension(request_id): Extension<RequestId>,
-) -> Result<Json<BaseResponse>, ()> {
-    state.bot.delete_webhook().await.map_err(|_| ())?;
+) -> Result<Json<BaseResponse>, SwanError> {
+    state.bot.delete_webhook().await?;
     state
         .bot
         .send_message(
@@ -159,11 +159,10 @@ pub async fn remove_webhook(
             .as_str(),
         )
         .send()
-        .await
-        .map_err(|_| ())?;
+        .await?;
 
     Ok(Json(BaseResponse::reply(
         StatusCode::OK,
-        format!("Custom webhook will be deleted!").as_str(),
+        "Custom webhook will be deleted!",
     )))
 }

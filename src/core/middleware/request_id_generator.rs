@@ -101,10 +101,10 @@ where
             "Unknown"
         };
 
-        if !parts.headers.contains_key(SWAN_REQ_ID) {
-            if let Ok(header_value) = HeaderValue::from_str(&request_id) {
-                parts.headers.insert(SWAN_REQ_ID, header_value);
-            }
+        if !parts.headers.contains_key(SWAN_REQ_ID)
+            && let Ok(header_value) = HeaderValue::from_str(&request_id)
+        {
+            parts.headers.insert(SWAN_REQ_ID, header_value);
         }
 
         let span = tracing::info_span!(
@@ -133,7 +133,7 @@ where
                     Ok(ip) => {
                         id_request.ip_address = ip.0.to_string().to_owned();
                         tracing::Span::current()
-                            .record("ip_address", &id_request.ip_address.to_owned());
+                            .record("ip_address", id_request.ip_address.to_owned());
                         parts.extensions.insert(id_request.clone());
                         parts.extensions.insert(RequestInfo {
                             device_name: Some(os.to_string()),
