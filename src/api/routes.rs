@@ -15,7 +15,8 @@ use utoipa_swagger_ui::SwaggerUi;
         common::health,
         telegram::listen,
         telegram::set_new_webhook,
-        telegram::remove_webhook
+        telegram::remove_webhook,
+        telegram::get_webhook_info,
     ),
     components(
         schemas(BaseResponse)
@@ -37,6 +38,7 @@ pub fn create_routes() -> Router<AppState> {
     let telegram_routes = Router::new()
         .route("/telegram/listener", post(telegram::listen))
         .route("/telegram/remove_webhook", get(telegram::remove_webhook))
+        .route("/telegram/webhook_info", get(telegram::get_webhook_info))
         .route("/telegram/set_webhook", post(telegram::set_new_webhook));
 
     Router::new()
