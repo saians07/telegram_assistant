@@ -1,0 +1,25 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - "master"
+      - "release_candidate*"
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+  APP_NAME: swan
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Formatting check
+        run: cargo fmt --all -- --check
+      - name: Linting
+        run: cargo clippy -- -D warnings
