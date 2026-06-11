@@ -1,0 +1,64 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    name: Deploy to server
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout the github code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build release binary
+        run: CARGO_BUILD_TARGET=aarch64-unknown-linux-gnu cargo build --release
+
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+
+      - name: Deploy via SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOSTNAME: ${{ secrets.SERVER_HOSTNAME }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat <<EOF > ~/.ssh/config
+          Host $SERVER_HOSTNAME
+            User $SERVER_USER
+            ProxyCommand cloudflared access ssh --hostname %h
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Copy binary to server
+        env:
+          SERVER_HOSTNAME: ${{ secrets.SERVER_HOSTNAME }}
+        run: |
+          rsync -avz --progress \
+            -e "ssh -F ~/.ssh/config" \
+            ./target/aarch64-unknown-linux-gnu/release/swan \
+            $SERVER_HOSTNAME:~/projects/telegram_assistant/swan
+
+      - name: Restart the Service
+        env:
+          SERVER_HOSTNAME: ${{ secrets.SERVER_HOSTNAME }}
+        run: |
+          ssh $SERVER_HOSTNAME << 'EOF'
+            sudo systemctl restart aplikasi-rust.service
+            git pull origin main
+            echo "Deployment Done!"
+          EOF
