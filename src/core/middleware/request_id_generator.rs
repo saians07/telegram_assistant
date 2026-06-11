@@ -23,7 +23,7 @@ pub struct RequestId {
     user_agent: String,
 }
 
-const SWAN_REQ_ID: &str = "swan-request-id";
+const SWAN_REQ_ID: &str = "X-Swan-Request-ID";
 
 #[derive(Debug, Clone)]
 pub struct RequestService<S> {
