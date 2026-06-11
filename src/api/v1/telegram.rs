@@ -1,5 +1,3 @@
-use std::env;
-
 use anyhow::Result;
 use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
 use secrecy::ExposeSecret;
@@ -29,7 +27,7 @@ use crate::{
 #[axum::debug_handler]
 pub async fn listen(
     State(state): State<AppState>,
-    Extension(request_id): Extension<RequestId>,
+    // Extension(request_id): Extension<RequestId>,
     Json(update): Json<Update>,
 ) -> Result<impl IntoResponse, SwanError> {
     // First let's get the message. For now, we only care about the message.
