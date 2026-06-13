@@ -11,7 +11,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Users::Table)
                     .if_not_exists()
-                    .col(pk_auto(Users::Id))
+                    .col(pk_uuid(Users::Id).default(Expr::cust("generate_uuid_v4()")))
                     .col(string_null(Users::Username))
                     .col(string_null(Users::Email))
                     .col(string_null(Users::PhoneNumber))

@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
                     .table(TelegramGuestChatHistory::Table)
                     .if_not_exists()
                     .col(pk_auto(TelegramGuestChatHistory::Id))
-                    .col(string(TelegramGuestChatHistory::TelegramGuestId))
+                    .col(integer(TelegramGuestChatHistory::TelegramGuestId))
                     .col(string(TelegramGuestChatHistory::Message))
                     .foreign_key(
                         ForeignKey::create()
