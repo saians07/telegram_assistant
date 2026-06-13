@@ -9,33 +9,33 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(TelegramUnauthorizedChatHistory::Table)
+                    .table(TelegramGuestChatHistory::Table)
                     .if_not_exists()
-                    .col(pk_auto(TelegramUnauthorizedChatHistory::Id))
-                    .col(string(TelegramUnauthorizedChatHistory::TelegramGuestId))
-                    .col(string(TelegramUnauthorizedChatHistory::Message))
+                    .col(pk_auto(TelegramGuestChatHistory::Id))
+                    .col(string(TelegramGuestChatHistory::TelegramGuestId))
+                    .col(string(TelegramGuestChatHistory::Message))
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_telegram_unauthorized_chat_history_telegram_guest_id")
                             .from(
-                                TelegramUnauthorizedChatHistory::Table,
-                                TelegramUnauthorizedChatHistory::TelegramGuestId,
+                                TelegramGuestChatHistory::Table,
+                                TelegramGuestChatHistory::TelegramGuestId,
                             )
                             .to(Alias::new("telegram_guest"), Alias::new("id")),
                     )
                     .col(
-                        ColumnDef::new(TelegramUnauthorizedChatHistory::CreatedAt)
+                        ColumnDef::new(TelegramGuestChatHistory::CreatedAt)
                             .timestamp_with_time_zone()
                             .not_null()
                             .default(Expr::current_timestamp()),
                     )
                     .col(
-                        ColumnDef::new(TelegramUnauthorizedChatHistory::DeletedAt)
+                        ColumnDef::new(TelegramGuestChatHistory::DeletedAt)
                             .timestamp_with_time_zone()
                             .null(),
                     )
                     .col(
-                        ColumnDef::new(TelegramUnauthorizedChatHistory::UpdatedAt)
+                        ColumnDef::new(TelegramGuestChatHistory::UpdatedAt)
                             .timestamp_with_time_zone()
                             .null()
                             .default(Expr::current_timestamp()),
@@ -49,7 +49,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(TelegramUnauthorizedChatHistory::Table)
+                    .table(TelegramGuestChatHistory::Table)
                     .to_owned(),
             )
             .await
@@ -57,7 +57,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum TelegramUnauthorizedChatHistory {
+enum TelegramGuestChatHistory {
     Table,
     Id,
     TelegramGuestId,
