@@ -2,6 +2,9 @@ use std::{ops::Deref, sync::Arc};
 
 use secrecy::SecretString;
 use teloxide::Bot;
+use tokio::sync::RwLock;
+
+use crate::core::ais::base::BotAgent;
 
 #[derive(Clone)]
 pub struct AppState(Arc<AppStateInner>);
@@ -10,6 +13,7 @@ pub struct AppStateInner {
     pub bot: Bot, // teloxide bot has been a singleton
     pub owner_chat_id: i64,
     pub secret_token: SecretString,
+    pub gemini_3_1_flash_lite: RwLock<Option<BotAgent>>,
 }
 
 impl AppState {
@@ -18,6 +22,7 @@ impl AppState {
             bot,
             owner_chat_id,
             secret_token,
+            gemini_3_1_flash_lite: RwLock::new(None),
         }))
     }
 }
