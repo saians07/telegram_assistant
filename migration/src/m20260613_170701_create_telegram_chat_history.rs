@@ -31,6 +31,15 @@ impl MigrationTrait for Migration {
                             .timestamp_with_time_zone()
                             .null(),
                     )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_telegram_chat_history_telegram_user_id")
+                            .from(
+                                TelegramChatHistory::Table,
+                                TelegramChatHistory::TelegramUserId,
+                            )
+                            .to(Alias::new("telegram_users"), Alias::new("id")),
+                    )
                     .to_owned(),
             )
             .await
