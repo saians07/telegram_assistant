@@ -18,13 +18,32 @@ use crate::core::{
 };
 
 // every part of the bot info basically changeable in the future.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct BotInfo {
     pub bot_name: String,
     pub base_url: String,
     pub api_key: String,
     pub system_prompt: &'static str,
     pub model: String,
+}
+
+impl Default for BotInfo {
+    fn default() -> Self {
+        BotInfo {
+            bot_name: "Swan".to_string(),
+            base_url: "".to_string(),
+            api_key: "".to_string(),
+            system_prompt: r#"
+                You are Swan, a virtual assistant created by PT Trias Sigma Technology.
+                Your jobs are as follow:
+                    * Engage in conversation with users about basic topics
+                    * Answer question related to PT TRIAS SIGMA TECHNOLOGY
+                    * Helping users by executing tools when possible and available.
+
+                "#,
+            model: "".to_string(),
+        }
+    }
 }
 
 pub struct BotAgent {
