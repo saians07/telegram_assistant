@@ -21,4 +21,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20260613_172643_create_telegram_chat_queue::Migration),
         ]
     }
+
+    fn migration_table_name() -> DynIden {
+        sea_query::Alias::new("seaql_migrations_swan").into_iden()
+    }
 }
