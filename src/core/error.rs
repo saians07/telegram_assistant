@@ -12,12 +12,33 @@ use crate::dto::response::BaseResponse;
 
 #[derive(Error, Debug, Serialize, Deserialize)]
 pub enum SwanError {
+    #[error("Database operation failed")]
+    #[serde(skip)]
+    Database(#[from] sea_orm::DbErr),
+
+    #[serde(skip)]
+    #[error("Transaction failed: {source}")]
+    Transaction {
+        #[source]
+        source: sea_orm::DbErr,
+        operation: &'static str,
+    },
+
     #[error("Telegram Bot Failed: {0}")]
     #[serde(skip)]
     TelegramRequestError(#[from] teloxide::RequestError),
 
     #[error("Unknown bot!")]
     UnauthorizedBot,
+
+    #[error("No record found {0}")]
+    NotFoundError(String),
+
+    #[error("The session has been expired.")]
+    SessionEnded,
+
+    #[error("Environment key: {0} not found!")]
+    MissingEnvVar(String),
 
     #[error("Operation failed: {operation}")]
     #[serde(skip)]
