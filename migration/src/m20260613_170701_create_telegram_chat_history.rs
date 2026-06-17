@@ -15,6 +15,7 @@ impl MigrationTrait for Migration {
                     .col(string(TelegramChatHistory::Author))
                     .col(integer(TelegramChatHistory::TelegramUserId))
                     .col(text(TelegramChatHistory::Message))
+                    .col(string(TelegramChatHistory::SessionId))
                     .col(
                         ColumnDef::new(TelegramChatHistory::CreatedAt)
                             .timestamp_with_time_zone()
@@ -62,4 +63,5 @@ enum TelegramChatHistory {
     CreatedAt,
     UpdatedAt,
     DeletedAt, // only soft delete
+    SessionId,
 }
