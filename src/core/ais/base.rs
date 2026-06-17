@@ -6,7 +6,7 @@ use rig::{
     client::CompletionClient,
     completion::Chat,
     message::Message,
-    providers::{anthropic, cohere, gemini, openai, together},
+    providers::{anthropic, cohere, gemini, openai, openrouter, together},
     tool::ToolDyn,
     wasm_compat::WasmCompatSend,
 };
@@ -39,7 +39,6 @@ impl Default for BotInfo {
                     * Engage in conversation with users about basic topics
                     * Answer question related to PT TRIAS SIGMA TECHNOLOGY
                     * Helping users by executing tools when possible and available.
-
                 "#,
             model: "".to_string(),
         }
@@ -111,6 +110,18 @@ impl BotAgent {
                 .preamble(&bot_info.system_prompt),
         )
     }
+
+    pub fn new_openrouter(bot_info: BotInfo) -> BuilderAgentProvider {
+        BuilderAgentProvider::OpenRouter(
+            openrouter::Client::builder()
+                .base_url(bot_info.base_url)
+                .api_key(bot_info.api_key)
+                .build()
+                .unwrap()
+                .agent(bot_info.model)
+                .preamble(&bot_info.system_prompt),
+        )
+    }
 }
 
 impl BotAgent {
@@ -130,6 +141,7 @@ impl BotAgent {
             ProviderName::Cohere => BotAgent::new_cohere(bot_info),
             ProviderName::Gemini => BotAgent::new_gemini(bot_info),
             ProviderName::Together => BotAgent::new_together(bot_info),
+            ProviderName::OpenRouter => BotAgent::new_openrouter(bot_info),
         };
 
         Self {
@@ -152,6 +164,7 @@ impl BotAgent {
             ProviderAgent::Cohere(_) => BotAgent::new_cohere(bot_info),
             ProviderAgent::Gemini(_) => BotAgent::new_gemini(bot_info),
             ProviderAgent::Together(_) => BotAgent::new_together(bot_info),
+            ProviderAgent::OpenRouter(_) => BotAgent::new_openrouter(bot_info),
         };
         self.agent = agt.build(tools).await;
         Ok(())
@@ -178,6 +191,22 @@ impl AgentTrait for BotAgent {
                 agent.chat(prompt, chat_history).await.map_err(|e| {
                     SwanError::operation_with_source(
                         "Failed to get response from Open AI server: ",
+                        e,
+                    )
+                })?
+            }
+            ProviderAgent::OpenRouter(agent) => {
+                agent.chat(prompt, chat_history).await.map_err(|e| {
+                    SwanError::operation_with_source(
+                        "Failed to get response from Open Open Router Server: ",
+                        e,
+                    )
+                })?
+            }
+            ProviderAgent::OpenAI(agent) => {
+                agent.chat(prompt, chat_history).await.map_err(|e| {
+                    SwanError::operation_with_source(
+                        "Failed to get response from Open Open Router Server: ",
                         e,
                     )
                 })?

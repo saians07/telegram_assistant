@@ -43,6 +43,9 @@ pub async fn listen(
         }
     };
 
+    // TODO: we need to process this asyncronuously
+    // to ensure that we can immediately return some
+    // result.
     let agents = &state.bot_agents;
     let response = state
         .telegram
