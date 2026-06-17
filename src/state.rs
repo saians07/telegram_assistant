@@ -1,28 +1,31 @@
-use std::{ops::Deref, sync::Arc};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use secrecy::SecretString;
-use teloxide::Bot;
-use tokio::sync::RwLock;
 
-use crate::core::ais::base::BotAgent;
+use crate::{core::ais::base::BotAgent, service::telegram::TelegramService};
 
 #[derive(Clone)]
 pub struct AppState(Arc<AppStateInner>);
 
 pub struct AppStateInner {
-    pub bot: Bot, // teloxide bot has been a singleton
+    pub telegram: TelegramService, // teloxide bot has been a singleton
     pub owner_chat_id: i64,
     pub secret_token: SecretString,
-    pub gemini_3_1_flash_lite: RwLock<Option<BotAgent>>,
+    pub bot_agents: HashMap<String, BotAgent>,
 }
 
 impl AppState {
-    pub fn new(bot: Bot, owner_chat_id: i64, secret_token: SecretString) -> Self {
+    pub fn new(
+        telegram: TelegramService,
+        owner_chat_id: i64,
+        secret_token: SecretString,
+        bot_agents: HashMap<String, BotAgent>,
+    ) -> Self {
         Self(Arc::new(AppStateInner {
-            bot,
+            telegram,
             owner_chat_id,
             secret_token,
-            gemini_3_1_flash_lite: RwLock::new(None),
+            bot_agents,
         }))
     }
 }
