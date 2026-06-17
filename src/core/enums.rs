@@ -1,6 +1,6 @@
 use rig::{
     agent::{Agent, AgentBuilder},
-    providers::{anthropic, cohere, gemini, openai, together},
+    providers::{anthropic, cohere, gemini, openai, openrouter, together},
     tool::ToolDyn,
 };
 
@@ -10,6 +10,7 @@ pub enum ProviderName {
     Anthropic,
     Gemini,
     Together,
+    OpenRouter,
 }
 
 pub enum BuilderAgentProvider {
@@ -18,6 +19,7 @@ pub enum BuilderAgentProvider {
     Anthropic(AgentBuilder<anthropic::completion::CompletionModel>),
     Gemini(AgentBuilder<gemini::completion::CompletionModel>),
     Together(AgentBuilder<together::completion::CompletionModel>),
+    OpenRouter(AgentBuilder<openrouter::completion::CompletionModel>),
 }
 
 pub enum BuilderAgentProviderWithTool {
@@ -26,6 +28,7 @@ pub enum BuilderAgentProviderWithTool {
     Anthropic(AgentBuilder<anthropic::completion::CompletionModel>),
     Gemini(AgentBuilder<gemini::completion::CompletionModel>),
     Together(AgentBuilder<together::completion::CompletionModel>),
+    OpenRouter(AgentBuilder<openrouter::CompletionModel>),
 }
 
 impl BuilderAgentProvider {
@@ -67,6 +70,10 @@ impl BuilderAgentProvider {
                     ProviderAgent::Together(agent)
                 }
             },
+            BuilderAgentProvider::OpenRouter(builder) => match tools {
+                Some(tool) => ProviderAgent::OpenRouter(builder.tools(tool).build()),
+                _ => ProviderAgent::OpenRouter(builder.build()),
+            },
         }
     }
 }
@@ -77,6 +84,7 @@ pub enum ProviderAgent {
     Anthropic(Agent<anthropic::completion::CompletionModel>),
     Gemini(Agent<gemini::completion::CompletionModel>),
     Together(Agent<together::completion::CompletionModel>),
+    OpenRouter(Agent<openrouter::completion::CompletionModel>),
 }
 
 pub enum TaskType {
