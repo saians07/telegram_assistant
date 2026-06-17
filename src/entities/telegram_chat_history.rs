@@ -12,6 +12,7 @@ pub struct Model {
     pub telegram_user_id: i32,
     #[sea_orm(column_type = "Text")]
     pub message: String,
+    pub session_id: String,
     pub created_at: DateTimeWithTimeZone,
     pub updated_at: Option<DateTimeWithTimeZone>,
     pub deleted_at: Option<DateTimeWithTimeZone>,

@@ -85,6 +85,7 @@ impl TelegramService {
         session_id: String,
         agents: &HashMap<String, BotAgent>,
     ) -> Result<(), SwanError> {
+        tracing::info!("Start processing user message ...");
         let chat_id = message.chat.id;
         let user_id = self.repo.fetch_user(chat_id.0).await?.id;
         let quota_count = self.repo.fetch_user_quota(chat_id.0).await?;
@@ -104,7 +105,10 @@ impl TelegramService {
 
         // let agent = agents.get("gemini_3.1_flash_google").unwrap();
         let agent = agents.get("gemma_4_openrouter").unwrap();
-        let last_session = self.repo.fetch_last_session_id(chat_id.0).await?;
+        let last_session = match self.repo.fetch_last_session_id(chat_id.0).await {
+            Ok(session) => session,
+            Err(_) => session_id.clone(),
+        };
         let chat_history = self
             .repo
             .fetch_user_chat_history(chat_id.0, &last_session)
@@ -112,8 +116,6 @@ impl TelegramService {
         let mut telegram_history = TelegramHistoryList(chat_history)
             .create_message_vector()
             .await;
-
-        tracing::warn!("TRACING telegram_history: {:#?}", &telegram_history);
 
         let response = agent.test_func(text, &mut telegram_history).await?;
 

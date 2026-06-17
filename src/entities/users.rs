@@ -8,17 +8,17 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub fullname: String,
-    #[sea_orm(unique)]
-    pub username: String,
+    pub username: Option<String>,
     pub email: Option<String>,
-    #[sea_orm(unique)]
-    pub phone_number: String,
+    pub phone_number: Option<String>,
     #[sea_orm(column_type = "VarBinary(StringLen::None)", nullable)]
     pub password_hash: Option<Vec<u8>>,
     #[sea_orm(column_type = "VarBinary(StringLen::None)", nullable)]
     pub password_salt: Option<Vec<u8>>,
     pub password_iteration: Option<i32>,
+    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: Option<DateTimeWithTimeZone>,
+    pub deleted_at: Option<DateTimeWithTimeZone>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
