@@ -84,7 +84,8 @@ async fn main() -> Result<(), SwanError> {
         address
     );
 
-    Ok(serve(listener, app).await.unwrap())
+    serve(listener, app).await.unwrap();
+    Ok(())
 }
 
 async fn run_migrations(db: &sea_orm::DatabaseConnection) -> Result<(), SwanError> {

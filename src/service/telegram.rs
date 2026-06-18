@@ -14,7 +14,7 @@ use crate::{
         ais::base::BotAgent, error::SwanError, formatter::markdown_to_html,
         traits::ai_agent::AgentTrait,
     },
-    dto::response::{BaseResponse, TelegramHistoryList},
+    dto::response::BaseResponse,
     repositories::telegram::TelegramRepo,
 };
 
@@ -54,22 +54,18 @@ impl TelegramService {
             tracing::warn!("User is authorized.");
             // handling the session from the very beginning
             let mut session_id = session_id;
-            match self.repo.fetch_last_session_id(chat_id.0).await {
-                Ok(session) => session_id = session,
-                Err(_) => {} // when error, we do nothing since we have had the session_id
-            }
-            match self
+            if let Ok(session) = self.repo.fetch_last_session_id(chat_id.0).await {
+                session_id = session
+            };
+            if let Err(e) = self
                 .handle_authorized_user_message(message, session_id, agents)
                 .await
             {
-                Ok(_) => {}
-                Err(e) => {
-                    tracing::error!("Failed to handle user request: {:#?}", e);
-                    return Ok(BaseResponse::reply(
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        "Failed to handle request!",
-                    ));
-                }
+                tracing::error!("Failed to handle user request: {:#?}", e);
+                return Ok(BaseResponse::reply(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to handle request!",
+                ));
             }
         }
         // no matter what is the result of our processing, we
@@ -116,23 +112,32 @@ impl TelegramService {
             .repo
             .fetch_user_chat_history(chat_id.0, &last_session)
             .await?;
-        let mut telegram_history = TelegramHistoryList(chat_history)
-            .create_message_vector()
-            .await;
+        let mut telegram_history = agent.create_history(chat_history).await;
 
-        let response = agent.test_func(text, &mut telegram_history).await?;
+        match agent.send_chat_message(text, &mut telegram_history).await {
+            Ok(response) => {
+                self.bot
+                    .send_message(chat_id, markdown_to_html(&response))
+                    .parse_mode(teloxide::types::ParseMode::Html)
+                    .await?;
 
-        self.bot
-            .send_message(chat_id, markdown_to_html(&response))
-            .parse_mode(teloxide::types::ParseMode::Html)
-            .await?;
-
-        self.repo
-            .insert_user_chat("user", text, user_id, &session_id)
-            .await?;
-        self.repo
-            .insert_user_chat("assistant", &response, user_id, &session_id)
-            .await?;
+                self.repo
+                    .insert_user_chat("user", text, user_id, &session_id)
+                    .await?;
+                self.repo
+                    .insert_user_chat("assistant", &response, user_id, &session_id)
+                    .await?;
+            }
+            Err(e) => {
+                self.bot
+                    .send_message(
+                        chat_id,
+                        "Maaf saat ini sedang ada gangguan internal, silahkan coba lagi nanti.",
+                    )
+                    .await?;
+                return Err(e);
+            }
+        }
 
         Ok(())
     }
@@ -185,17 +190,11 @@ impl TelegramService {
     }
 
     async fn is_authorized_user(&self, chat_id: i64) -> bool {
-        match self.repo.fetch_user(chat_id).await {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        self.repo.fetch_user(chat_id).await.is_ok()
     }
 
     async fn is_registered_guest(&self, chat_id: i64) -> bool {
-        match self.repo.fetch_guest(chat_id).await {
-            Ok(_) => true,
-            Err(_) => false,
-        }
+        self.repo.fetch_guest(chat_id).await.is_ok()
     }
 
     async fn check_guest_quota(&self, chat_id: i64) -> Result<i32, SwanError> {
