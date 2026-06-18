@@ -11,10 +11,13 @@ use rig::{
     wasm_compat::WasmCompatSend,
 };
 
-use crate::core::{
-    enums::{BuilderAgentProvider, ProviderAgent, ProviderName},
-    error::SwanError,
-    traits::ai_agent::AgentTrait,
+use crate::{
+    core::{
+        enums::{BuilderAgentProvider, ProviderAgent, ProviderName},
+        error::SwanError,
+        traits::ai_agent::AgentTrait,
+    },
+    dto::response::TelegramHistory,
 };
 
 // every part of the bot info basically changeable in the future.
@@ -58,7 +61,7 @@ impl BotAgent {
             .build()
             .unwrap()
             .agent(bot_info.model)
-            .preamble(&bot_info.system_prompt);
+            .preamble(bot_info.system_prompt);
 
         BuilderAgentProvider::OpenAI(agent)
     }
@@ -71,7 +74,7 @@ impl BotAgent {
                 .build()
                 .unwrap()
                 .agent(bot_info.model)
-                .preamble(&bot_info.system_prompt),
+                .preamble(bot_info.system_prompt),
         )
     }
 
@@ -83,7 +86,7 @@ impl BotAgent {
                 .build()
                 .unwrap()
                 .agent(bot_info.model)
-                .preamble(&bot_info.system_prompt),
+                .preamble(bot_info.system_prompt),
         )
     }
 
@@ -95,7 +98,7 @@ impl BotAgent {
                 .build()
                 .unwrap()
                 .agent(bot_info.model)
-                .preamble(&bot_info.system_prompt),
+                .preamble(bot_info.system_prompt),
         )
     }
 
@@ -107,7 +110,7 @@ impl BotAgent {
                 .build()
                 .unwrap()
                 .agent(bot_info.model)
-                .preamble(&bot_info.system_prompt),
+                .preamble(bot_info.system_prompt),
         )
     }
 
@@ -119,7 +122,7 @@ impl BotAgent {
                 .build()
                 .unwrap()
                 .agent(bot_info.model)
-                .preamble(&bot_info.system_prompt),
+                .preamble(bot_info.system_prompt),
         )
     }
 }
@@ -174,14 +177,63 @@ impl BotAgent {
 #[async_trait]
 impl AgentTrait for BotAgent {
     /// Function to convert user and ai turn
-    async fn create_history(&self) -> Vec<Message> {
-        let mut a = Vec::new();
-        a.push(Message::user(
-            "Halo nama saya adalah Bob! Saya tinggal dipinggiran kota California.",
-        ));
-        a
+    async fn create_history(&self, telegram_history: Vec<TelegramHistory>) -> Vec<Message> {
+        let mut messages = String::new();
+        let mut prev_author = String::new();
+        let mut history: Vec<Message> = Vec::new();
+        let len_hist = telegram_history.len() - 1;
+
+        for (idx, message) in telegram_history.iter().enumerate() {
+            let message = message.clone();
+            if idx == 0 {
+                messages = message.message.clone();
+                prev_author = "user".to_string();
+                continue;
+            }
+            if idx == len_hist {
+                match message.author.as_str() {
+                    "user" => {
+                        if prev_author == "user" {
+                            messages = format!("{} {}", &messages, &message.message);
+                            history.push(Message::user(messages.clone()));
+                        }
+                        if prev_author == "assistant" {
+                            history.push(Message::user(message.message.clone()));
+                        }
+                    }
+                    "assistant" => {
+                        history.push(Message::assistant(message.message.clone()));
+                    }
+                    _ => {}
+                }
+            }
+            match message.author.as_str() {
+                "user" => {
+                    if prev_author == "user" {
+                        messages = format!("{} {}", &messages, &message.message);
+                    }
+                    if prev_author == "assistant" {
+                        history.push(Message::assistant(messages));
+                        messages = message.message;
+                    }
+                    prev_author = "user".to_string();
+                }
+                "assistant" => {
+                    if prev_author == "user" {
+                        history.push(Message::user(messages));
+                        messages = message.message;
+                        prev_author = "assistant".to_string();
+                    } else {
+                        continue;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        history
     }
-    async fn test_func(
+    async fn send_chat_message(
         &self,
         prompt: impl Into<Message> + WasmCompatSend,
         chat_history: &mut Vec<Message>,
