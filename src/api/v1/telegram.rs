@@ -2,9 +2,9 @@ use anyhow::Result;
 use axum::{Extension, Json, extract::State, http::StatusCode, response::IntoResponse};
 use secrecy::ExposeSecret;
 use teloxide::{
-    payloads::{SendVoiceSetters, SetWebhookSetters},
+    payloads::SetWebhookSetters,
     prelude::{Request, Requester},
-    types::{ChatId, InputFile, Update, UpdateKind},
+    types::{ChatId, Update, UpdateKind},
 };
 
 use crate::{
@@ -27,36 +27,32 @@ use crate::{
 #[axum::debug_handler]
 pub async fn listen(
     State(state): State<AppState>,
-    // Extension(request_id): Extension<RequestId>,
+    Extension(request_id): Extension<RequestId>,
     Json(update): Json<Update>,
 ) -> Result<impl IntoResponse, SwanError> {
     // First let's get the message. For now, we only care about the message.
     // We drop anything else for now.
     let message = match update.kind {
         UpdateKind::Message(msg) => msg,
-        _ => return Err(SwanError::operation("No message found")),
+        _ => {
+            return Ok(Json(BaseResponse {
+                status: 400,
+                message: "No messsages found!".to_string(),
+                data: None,
+            }));
+        }
     };
 
-    // To avoid impostor, we remove anyone other than trusted people
-    // Currently, we will use this simple approach.
-    // TODO: Use database later!
-    if message.chat.id.0 != state.owner_chat_id {
-        let audio_file = InputFile::file("assets/voices/Belum_Terdaftar.mp3");
-        let _ = state
-            .bot
-            .send_voice(message.chat.id, audio_file)
-            .caption("Pesan dari Tarzan!")
-            .await?;
-    }
-    let _ = state
-        .bot
-        .send_message(message.chat.id, "Oke, I got you!")
+    // TODO: we need to process this asyncronuously
+    // to ensure that we can immediately return some
+    // result.
+    let agents = &state.bot_agents;
+    let response = state
+        .telegram
+        .receive_message(message, agents, request_id.id)
         .await?;
 
-    Ok(Json(BaseResponse::reply(
-        StatusCode::OK,
-        "Your request has been accepted!",
-    )))
+    Ok(Json(response))
 }
 
 #[
@@ -74,9 +70,10 @@ pub async fn get_webhook_info(
     State(state): State<AppState>,
     Extension(request_id): Extension<RequestId>,
 ) -> Result<impl IntoResponse, SwanError> {
-    let webhook_info = state.bot.get_webhook_info().send().await?;
+    let webhook_info = state.telegram.bot.get_webhook_info().send().await?;
 
     state
+        .telegram
         .bot
         .send_message(
             ChatId(state.owner_chat_id),
@@ -109,11 +106,13 @@ pub async fn set_new_webhook(
     Json(payload): Json<NewWebhook>,
 ) -> Result<impl IntoResponse, SwanError> {
     state
+        .telegram
         .bot
         .set_webhook(payload.into_url()?)
         .secret_token(state.secret_token.expose_secret().to_owned())
         .await?;
     state
+        .telegram
         .bot
         .send_message(
             ChatId(state.owner_chat_id),
@@ -146,8 +145,9 @@ pub async fn remove_webhook(
     State(state): State<AppState>,
     Extension(request_id): Extension<RequestId>,
 ) -> Result<Json<BaseResponse>, SwanError> {
-    state.bot.delete_webhook().await?;
+    state.telegram.bot.delete_webhook().await?;
     state
+        .telegram
         .bot
         .send_message(
             ChatId(state.owner_chat_id),

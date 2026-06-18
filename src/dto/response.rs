@@ -1,4 +1,12 @@
 use axum::http::StatusCode;
+use sea_orm::{FromJsonQueryResult, FromQueryResult};
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, FromJsonQueryResult, FromQueryResult, Serialize, Deserialize, Default)]
+pub struct TelegramHistory {
+    pub author: String,
+    pub message: String,
+}
 
 #[derive(serde::Serialize, utoipa::ToSchema, Debug)]
 pub struct BaseResponse {

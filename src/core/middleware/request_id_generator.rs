@@ -18,9 +18,9 @@ pub struct RequestLayer;
 
 #[derive(Debug, Clone)]
 pub struct RequestId {
-    id: String,
-    ip_address: String,
-    user_agent: String,
+    pub id: String,
+    pub ip_address: String,
+    pub user_agent: String,
 }
 
 const SWAN_REQ_ID: &str = "X-Swan-Request-ID";
