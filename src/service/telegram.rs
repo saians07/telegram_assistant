@@ -4,13 +4,16 @@ use anyhow::Result;
 use reqwest::StatusCode;
 use teloxide::{
     Bot,
-    payloads::SendVoiceSetters,
+    payloads::{SendMessageSetters, SendVoiceSetters},
     prelude::Requester,
     types::{ChatId, InputFile, Message},
 };
 
 use crate::{
-    core::{ais::base::BotAgent, error::SwanError, traits::ai_agent::AgentTrait},
+    core::{
+        ais::base::BotAgent, error::SwanError, formatter::markdown_to_html,
+        traits::ai_agent::AgentTrait,
+    },
     dto::response::{BaseResponse, TelegramHistoryList},
     repositories::telegram::TelegramRepo,
 };
@@ -120,8 +123,8 @@ impl TelegramService {
         let response = agent.test_func(text, &mut telegram_history).await?;
 
         self.bot
-            .send_message(chat_id, response.clone())
-            // .parse_mode(teloxide::types::ParseMode::Html)
+            .send_message(chat_id, markdown_to_html(&response))
+            .parse_mode(teloxide::types::ParseMode::Html)
             .await?;
 
         self.repo
